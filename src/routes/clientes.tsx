@@ -188,6 +188,9 @@ function Clientes() {
             </label>
           ))}
         </div>
+        <div className="mt-3">
+          <CampoFoto valor={foto} onChange={setFoto} />
+        </div>
         <Button onClick={() => cadastro.mutate()} disabled={!podeSalvar || cadastro.isPending} className="mt-4">{cadastro.isPending ? "Salvando..." : "Cadastrar cliente"}</Button>
       </SectionCard>
 
@@ -268,6 +271,9 @@ function Clientes() {
                     </label>
                   ))}
                 </div>
+                <div className="mt-3">
+                  <CampoFoto valor={editFoto} onChange={setEditFoto} />
+                </div>
                 <div className="mt-4 flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setEditId(null)}>Cancelar</Button>
                   <Button onClick={() => atualizacao.mutate()} disabled={edit.nome.trim() === "" || edit.associado.trim() === "" || atualizacao.isPending}>
@@ -308,7 +314,9 @@ function Clientes() {
 
         {cliente ? <div className="space-y-4">
           <SectionCard titulo="Ficha do cliente">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <FotoCliente src={fotos[cliente.id]} />
+            <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ["Nome", cliente.nome],
                 ["Associado número", cliente.associado],
@@ -326,6 +334,7 @@ function Clientes() {
                   <p className="truncate text-sm font-medium text-foreground">{v}</p>
                 </div>
               ))}
+            </div>
             </div>
             <div className="mt-4 rounded-lg border border-border p-3">
               <ProgressoPontos pontos={cliente.pontos} />

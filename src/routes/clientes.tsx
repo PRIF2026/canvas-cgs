@@ -6,6 +6,8 @@ import { PageHeader, ProgressoPontos, SectionCard, Selo, StatusPill } from "@/co
 import { brl, dataBr, pontosDaVenda, SELOS, type Cliente, type SeloNumber, type Venda, type Sorteio } from "@/lib/cgs-data";
 import { supabase } from "@/integrations/supabase/client";
 import { cgsKeys, getErrorMessage, useClientes, useSorteios, useVendas } from "@/lib/cgs-db";
+import { fotosKey, removerFoto, salvarFoto, useFotosClientes } from "@/lib/foto-cliente";
+import { CampoFoto, FotoCliente } from "@/components/cgs/campo-foto";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/clientes")({
@@ -42,9 +44,12 @@ function Clientes() {
   const clientesQuery = useClientes();
   const vendasQuery = useVendas();
   const sorteiosQuery = useSorteios();
+  const fotos = useFotosClientes().data ?? {};
   const [busca, setBusca] = useState("");
   const [sel, setSel] = useState("");
   const [form, setForm] = useState({ ...formVazio });
+  const [foto, setFoto] = useState<string | null>(null);
+  const [editFoto, setEditFoto] = useState<string | null>(null);
 
   const clientes: Cliente[] = (clientesQuery.data ?? []).map((c) => ({
     id: c.id, nome: c.nome, associado: c.associado ?? "—", cpf: c.cpf ?? "—",
@@ -86,9 +91,16 @@ function Clientes() {
         nascimento: form.nascimento || null, endereco: form.endereco.trim() || null, carteira,
       }).select("id").single();
       if (error) throw error;
+      if (foto) await salvarFoto(data.id, foto);
       return data.id;
     },
-    onSuccess: async (id) => { await queryClient.invalidateQueries({ queryKey: cgsKeys.clientes }); setSel(id); setForm({ ...formVazio }); toast.success("Cliente cadastrado."); },
+    onSuccess: async (id) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: cgsKeys.clientes }),
+        queryClient.invalidateQueries({ queryKey: fotosKey }),
+      ]);
+      setSel(id); setForm({ ...formVazio }); setFoto(null); toast.success("Cliente cadastrado.");
+    },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 
@@ -121,6 +133,7 @@ function Clientes() {
       endereco: c.endereco === "—" ? "" : c.endereco,
       carteira: c.carteira === "—" ? "" : c.carteira,
     });
+    setEditFoto(fotos[id] ?? null);
   };
 
   const atualizacao = useMutation({
@@ -132,9 +145,16 @@ function Clientes() {
         nascimento: edit.nascimento || null, endereco: edit.endereco.trim() || null, carteira: edit.carteira.trim() || null,
       }).eq("id", editId);
       if (error) throw error;
+      if (editFoto !== (fotos[editId] ?? null)) {
+        if (editFoto) await salvarFoto(editId, editFoto);
+        else await removerFoto(editId);
+      }
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: cgsKeys.clientes });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: cgsKeys.clientes }),
+        queryClient.invalidateQueries({ queryKey: fotosKey }),
+      ]);
       setEditId(null); setTermo("");
       toast.success("Cliente atualizado.");
     },
@@ -167,6 +187,9 @@ function Clientes() {
               />
             </label>
           ))}
+        </div>
+        <div className="mt-3">
+          <CampoFoto valor={foto} onChange={setFoto} />
         </div>
         <Button onClick={() => cadastro.mutate()} disabled={!podeSalvar || cadastro.isPending} className="mt-4">{cadastro.isPending ? "Salvando..." : "Cadastrar cliente"}</Button>
       </SectionCard>
@@ -248,6 +271,9 @@ function Clientes() {
                     </label>
                   ))}
                 </div>
+                <div className="mt-3">
+                  <CampoFoto valor={editFoto} onChange={setEditFoto} />
+                </div>
                 <div className="mt-4 flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setEditId(null)}>Cancelar</Button>
                   <Button onClick={() => atualizacao.mutate()} disabled={edit.nome.trim() === "" || edit.associado.trim() === "" || atualizacao.isPending}>
@@ -288,7 +314,9 @@ function Clientes() {
 
         {cliente ? <div className="space-y-4">
           <SectionCard titulo="Ficha do cliente">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <FotoCliente src={fotos[cliente.id] ?? null} />
+            <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ["Nome", cliente.nome],
                 ["Associado número", cliente.associado],
@@ -306,6 +334,7 @@ function Clientes() {
                   <p className="truncate text-sm font-medium text-foreground">{v}</p>
                 </div>
               ))}
+            </div>
             </div>
             <div className="mt-4 rounded-lg border border-border p-3">
               <ProgressoPontos pontos={cliente.pontos} />

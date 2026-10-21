@@ -7,6 +7,12 @@ import { brl, dataBr, MINIMO_VALOR_CARTELA, type SeloNumber } from "@/lib/cgs-da
 import { supabase } from "@/integrations/supabase/client";
 import { cgsKeys, getErrorMessage, useClientes, useLojas, useProdutos, useVendas } from "@/lib/cgs-db";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/vendas")({
   head: () => ({
@@ -30,18 +36,25 @@ function Vendas() {
   const [qtd, setQtd] = useState(1);
   const [cliente, setCliente] = useState("");
   const [loja, setLoja] = useState("");
+  const [dia, setDia] = useState<Date | undefined>();
 
   const p = produtos.find((x) => x.id === produto) ?? produtos[0];
   const selo = (p?.selo ?? 1) as SeloNumber;
   const pontos = selo * Math.min(qtd, 2);
   const total = Number(p?.preco ?? 0) * qtd;
 
+  const vendasFiltradas = useMemo(() => {
+    if (!dia) return vendas;
+    const alvo = format(dia, "yyyy-MM-dd");
+    return vendas.filter((v) => v.data.slice(0, 10) === alvo);
+  }, [vendas, dia]);
+
   const totais = useMemo(
     () => ({
-      valor: vendas.reduce((a, v) => a + Number(v.valor_unitario) * v.quantidade, 0),
-      pontos: vendas.reduce((a, v) => a + v.pontos, 0),
+      valor: vendasFiltradas.reduce((a, v) => a + Number(v.valor_unitario) * v.quantidade, 0),
+      pontos: vendasFiltradas.reduce((a, v) => a + v.pontos, 0),
     }),
-    [vendas],
+    [vendasFiltradas],
   );
 
   const registro = useMutation({
@@ -108,7 +121,29 @@ function Vendas() {
           </div>
         </SectionCard>
 
-        <SectionCard titulo={`Vendas registradas · ${brl(totais.valor)} · ${totais.pontos} pontos`}>
+        <SectionCard
+          titulo={`Vendas registradas${dia ? ` em ${format(dia, "dd/MM/yyyy")}` : ""} · ${brl(totais.valor)} · ${totais.pontos} pontos`}
+          acao={
+            <div className="flex items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("justify-start font-normal", !dia && "text-muted-foreground")}>
+                    <CalendarIcon className="h-4 w-4" />
+                    {dia ? format(dia, "dd/MM/yyyy") : "Escolher dia"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar mode="single" selected={dia} onSelect={setDia} locale={ptBR} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              {dia ? (
+                <Button variant="ghost" size="sm" onClick={() => setDia(undefined)} aria-label="Mostrar todas as vendas">
+                  <X className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
+          }
+        >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
@@ -120,7 +155,12 @@ function Vendas() {
                 </tr>
               </thead>
               <tbody>
-              {vendas.map((v) => (
+              {vendasFiltradas.length === 0 ? (
+                <tr><td colSpan={12} className="py-6 text-center text-sm text-muted-foreground">
+                  {dia ? "Nenhuma venda registrada neste dia." : "Nenhuma venda registrada."}
+                </td></tr>
+              ) : null}
+              {vendasFiltradas.map((v) => (
                   <tr key={v.id} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-3 font-mono text-xs">{v.id}</td>
                     <td className="py-2.5 pr-3">{dataBr(v.data)}</td>

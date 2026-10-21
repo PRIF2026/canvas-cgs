@@ -45,6 +45,11 @@ export async function salvarFoto(clienteId: string, dataUrl: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function removerFoto(clienteId: string) {
+  const { error } = await supabase.from("configuracoes").delete().eq("chave", `${PREFIXO}${clienteId}`);
+  if (error) throw new Error(error.message);
+}
+
 export function useFotosClientes() {
   return useQuery({
     queryKey: fotosKey,

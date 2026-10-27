@@ -94,7 +94,7 @@ const PREMIO_RECEBIDO = new Set(["pago", "prêmio recebido", "premio recebido"])
 export function dataDoPremio(s: SorteioCartela): string | null {
   const m = /^(\d{1,2})\/(\d{4})$/.exec(s.mes_referencia?.trim() ?? "");
   const dia = Number(s.numero);
-  if (m && dia >= 1 && dia <= 31) return `${m[2]}-${m[1].padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+  if (m?.[1] && m[2] && dia >= 1 && dia <= 31) return `${m[2]}-${m[1].padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
   return s.data_sorteio ? s.data_sorteio.slice(0, 10) : null;
 }
 

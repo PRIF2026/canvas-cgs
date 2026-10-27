@@ -69,12 +69,15 @@ function Bingo() {
     if (!habilitado || girando) return;
     setGirando(true);
     let i = 0;
+    let dia = 0;
     const t = setInterval(() => {
-      setNumero(Math.floor(Math.random() * total) + 1);
+      dia = Math.floor(Math.random() * total) + 1;
+      setNumero(dia);
       if (++i > 14) {
         clearInterval(t);
         setGirando(false);
-        setNumero((dia) => { if (dia) gravar.mutate(dia); return dia; });
+        // Grava uma única vez, fora da atualização de estado (que o React pode repetir).
+        gravar.mutate(dia);
       }
     }, 70);
   };

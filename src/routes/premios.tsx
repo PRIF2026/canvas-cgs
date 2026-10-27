@@ -98,7 +98,7 @@ function Premios() {
                 <th className="py-2 pr-3">Cliente</th><th className="py-2 pr-3">Cartela</th><th className="py-2 pr-3">Nº</th>
                 <th className="py-2 pr-3">Dia</th><th className="py-2 pr-3">Valor original</th><th className="py-2 pr-3">Ganhadores</th>
                 <th className="py-2 pr-3">Valor individual</th><th className="py-2 pr-3">Sorteio</th><th className="py-2 pr-3">Pagamento</th>
-                <th className="py-2 pr-3">Status</th><th className="py-2">Ação</th>
+                <th className="py-2 pr-3">Status</th><th className="sticky right-0 bg-card py-2 pl-3">Ação</th>
               </tr>
             </thead>
             <tbody>
@@ -113,8 +113,8 @@ function Premios() {
                   <td className="py-2.5 pr-3 font-semibold">{brl(valorIndividual(s))}</td>
                   <td className="py-2.5 pr-3 text-muted-foreground">{dataBr(s.data_sorteio)}</td>
                   <td className="py-2.5 pr-3 text-muted-foreground">{s.previsao_pagamento ? dataBr(s.previsao_pagamento) : "—"}</td>
-                  <td className="py-2.5 pr-3"><StatusPill status={s.status_premio} /></td>
-                  <td className="py-2.5">
+                  <td className="whitespace-nowrap py-2.5 pr-3"><StatusPill status={s.status_premio} /></td>
+                  <td className="sticky right-0 bg-card py-2.5 pl-3">
                     <button
                       type="button"
                       onClick={() => setConfirmar(s)}

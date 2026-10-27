@@ -31,6 +31,9 @@ export async function prepararFoto(file: File): Promise<string> {
     canvas.height = FOTO_ALTURA;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Não foi possível processar a imagem.");
+    // JPEG não tem transparência: pinta o fundo de branco antes de desenhar.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, FOTO_LARGURA, FOTO_ALTURA);
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, FOTO_LARGURA, FOTO_ALTURA);
     return canvas.toDataURL("image/jpeg", 0.85);
   } finally {

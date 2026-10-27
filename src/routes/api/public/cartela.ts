@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/public/cartela")({
         const encontrado = candidatos.find((c) => clienteConfere(c, acesso.data));
         if (!encontrado) return responder({ error: "Associado não encontrado." }, 404);
 
-        const [cliente, selos, foto] = await Promise.all([
+        const [cliente, selos, foto, vendas] = await Promise.all([
           supabase
             .from("clientes")
             .select("nome, associado, carteira, pontos, programada, data_sorteada, numero_sorteado")
@@ -83,10 +83,16 @@ export const Route = createFileRoute("/api/public/cartela")({
             .single(),
           supabase.from("selos_cliente").select("selo, data").eq("cliente_id", encontrado.id).order("data"),
           supabase.from("configuracoes").select("valor").eq("chave", `${PREFIXO_FOTO}${encontrado.id}`).maybeSingle(),
+          supabase
+            .from("vendas")
+            .select("data, quantidade, valor_unitario, pontos, selo, produtos(nome), lojas(nome)")
+            .eq("cliente_id", encontrado.id)
+            .order("data", { ascending: false }),
         ]);
         if (cliente.error || !cliente.data) return responder({ error: "Associado não encontrado." }, 404);
+        if (vendas.error) console.error("CGS integração: erro ao buscar vendas", vendas.error.message);
 
-        return responder(montarCartela(cliente.data, selos.data ?? [], foto.data?.valor));
+        return responder(montarCartela(cliente.data, selos.data ?? [], foto.data?.valor, vendas.data ?? []));
       },
     },
   },

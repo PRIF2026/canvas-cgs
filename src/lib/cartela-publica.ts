@@ -56,10 +56,34 @@ type ClienteCartela = {
   numero_sorteado: number | null;
 };
 
+/** Venda do cliente como vem do banco, com os nomes do produto e da loja. */
+export type VendaCartela = {
+  data: string | null;
+  quantidade: number;
+  valor_unitario: number;
+  pontos: number;
+  selo: number;
+  produtos: { nome: string } | null;
+  lojas: { nome: string } | null;
+};
+
+export function montarCompras(vendas: VendaCartela[]) {
+  return vendas.map((v) => ({
+    data: v.data,
+    produto: v.produtos?.nome ?? null,
+    loja: v.lojas?.nome ?? null,
+    quantidade: Number(v.quantidade) || 0,
+    valor_unitario: Number(v.valor_unitario) || 0,
+    pontos: Number(v.pontos) || 0,
+    selo: Number(v.selo) || 0,
+  }));
+}
+
 export function montarCartela(
   cliente: ClienteCartela,
   selos: { selo: number; data: string | null }[],
   foto: string | null | undefined,
+  vendas: VendaCartela[] = [],
 ) {
   const pontos = Math.max(0, Number(cliente.pontos) || 0);
   return {
@@ -74,5 +98,6 @@ export function montarCartela(
     numero_sorteado: cliente.numero_sorteado,
     foto: fotoValida(foto),
     selos: selos.map((s) => ({ selo: s.selo, data: s.data })),
+    compras: montarCompras(vendas),
   };
 }

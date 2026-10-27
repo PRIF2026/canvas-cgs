@@ -20,4 +20,17 @@ describe("consulta da cartela pelo Cartela Digital", () => {
     expect(montarCartela(base, [], null).foto).toBeNull();
     expect(montarCartela(base, [], "javascript:alert(1)").foto).toBeNull();
   });
+
+  it("envia as compras do cliente com produto, loja, quantidade, valor unitário, pontos e selo", () => {
+    const base = { nome: "Teste", associado: null, carteira: null, pontos: 0, programada: false, data_sorteada: null, numero_sorteado: null };
+    const cartela = montarCartela(base, [], null, [
+      { data: "2026-10-20", quantidade: 2, valor_unitario: 15.5, pontos: 4, selo: 12, produtos: { nome: "Dipirona" }, lojas: { nome: "Loja Centro" } },
+      { data: "2026-10-21", quantidade: 1, valor_unitario: 9.9, pontos: 1, selo: 3, produtos: null, lojas: null },
+    ]);
+    expect(cartela.compras).toEqual([
+      { data: "2026-10-20", produto: "Dipirona", loja: "Loja Centro", quantidade: 2, valor_unitario: 15.5, pontos: 4, selo: 12 },
+      { data: "2026-10-21", produto: null, loja: null, quantidade: 1, valor_unitario: 9.9, pontos: 1, selo: 3 },
+    ]);
+    expect(montarCartela(base, [], null).compras).toEqual([]);
+  });
 });

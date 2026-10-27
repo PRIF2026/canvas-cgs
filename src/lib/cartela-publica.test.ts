@@ -33,4 +33,30 @@ describe("consulta da cartela pelo Cartela Digital", () => {
     ]);
     expect(montarCartela(base, [], null).compras).toEqual([]);
   });
+
+  describe("selos depois do prêmio recebido", () => {
+    const base = { nome: "Teste", associado: null, carteira: null, pontos: 47, programada: true, data_sorteada: "2026-09-16", numero_sorteado: 16 };
+    const selos = [
+      { selo: 7, data: "2026-08-18" },
+      { selo: 5, data: "2026-09-16" },
+      { selo: 1, data: "2026-09-17" },
+      { selo: 5, data: "2026-10-27" },
+    ];
+    const sorteio = { numero: 16, mes_referencia: "09/2026", data_sorteio: "2026-08-18" };
+
+    it("para de enviar os selos até a data sorteada quando o prêmio foi pago", () => {
+      const cartela = montarCartela(base, selos, null, [], [{ ...sorteio, status_premio: "Pago" }]);
+      expect(cartela.selos).toEqual([
+        { selo: 1, data: "2026-09-17" },
+        { selo: 5, data: "2026-10-27" },
+      ]);
+    });
+
+    it("continua enviando todos os selos enquanto o prêmio não foi recebido", () => {
+      for (const status_premio of ["Aguardando pagamento", "Aguardando apresentação", "Cancelado", "Expirado"]) {
+        expect(montarCartela(base, selos, null, [], [{ ...sorteio, status_premio }]).selos).toHaveLength(4);
+      }
+      expect(montarCartela(base, selos, null).selos).toHaveLength(4);
+    });
+  });
 });

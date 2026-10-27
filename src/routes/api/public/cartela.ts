@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/public/cartela")({
         const encontrado = candidatos.find((c) => clienteConfere(c, acesso.data));
         if (!encontrado) return responder({ error: "Associado não encontrado." }, 404);
 
-        const [cliente, selos, foto, vendas] = await Promise.all([
+        const [cliente, selos, foto, vendas, sorteios] = await Promise.all([
           supabase
             .from("clientes")
             .select("nome, associado, carteira, pontos, programada, data_sorteada, numero_sorteado")
@@ -88,11 +88,22 @@ export const Route = createFileRoute("/api/public/cartela")({
             .select("data, quantidade, valor_unitario, pontos, selo, produtos(nome), lojas(nome)")
             .eq("cliente_id", encontrado.id)
             .order("data", { ascending: false }),
+          supabase
+            .from("sorteios")
+            .select("numero, mes_referencia, data_sorteio, status_premio")
+            .eq("cliente_id", encontrado.id),
         ]);
         if (cliente.error || !cliente.data) return responder({ error: "Associado não encontrado." }, 404);
         if (vendas.error) console.error("CGS integração: erro ao buscar vendas", vendas.error.message);
+        if (sorteios.error) {
+          // Sem saber quais prêmios foram recebidos, não dá para tirar os selos usados com segurança.
+          console.error("CGS integração: erro ao buscar sorteios", sorteios.error.message);
+          return responder({ error: "Não foi possível consultar o CGS." }, 500);
+        }
 
-        return responder(montarCartela(cliente.data, selos.data ?? [], foto.data?.valor, vendas.data ?? []));
+        return responder(
+          montarCartela(cliente.data, selos.data ?? [], foto.data?.valor, vendas.data ?? [], sorteios.data ?? []),
+        );
       },
     },
   },

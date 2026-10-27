@@ -79,12 +79,48 @@ export function montarCompras(vendas: VendaCartela[]) {
   }));
 }
 
+/** Sorteio do cliente como vem do banco. */
+export type SorteioCartela = {
+  numero: number;
+  mes_referencia: string | null;
+  data_sorteio: string | null;
+  status_premio: string;
+};
+
+/** Situações em que o cliente já recebeu o prêmio. */
+const PREMIO_RECEBIDO = new Set(["pago", "prêmio recebido", "premio recebido"]);
+
+/** Data do prêmio (a data sorteada): dia sorteado no mês de referência "MM/AAAA". */
+export function dataDoPremio(s: SorteioCartela): string | null {
+  const m = /^(\d{1,2})\/(\d{4})$/.exec(s.mes_referencia?.trim() ?? "");
+  const dia = Number(s.numero);
+  if (m?.[1] && m[2] && dia >= 1 && dia <= 31) return `${m[2]}-${m[1].padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+  return s.data_sorteio ? s.data_sorteio.slice(0, 10) : null;
+}
+
+/**
+ * Tira os selos usados em prêmios já recebidos: selos com data até a data sorteada
+ * do prêmio recebido mais recente. Os selos depois dessa data continuam na cartela.
+ */
+export function selosEmAberto<T extends { data: string | null }>(selos: T[], sorteios: SorteioCartela[]): T[] {
+  const corte = sorteios
+    .filter((s) => PREMIO_RECEBIDO.has(s.status_premio.trim().toLowerCase()))
+    .map(dataDoPremio)
+    .filter((d): d is string => !!d)
+    .sort()
+    .at(-1);
+  if (!corte) return selos;
+  return selos.filter((s) => !s.data || s.data.slice(0, 10) > corte);
+}
+
 export function montarCartela(
   cliente: ClienteCartela,
-  selos: { selo: number; data: string | null }[],
+  selosCliente: { selo: number; data: string | null }[],
   foto: string | null | undefined,
   vendas: VendaCartela[] = [],
+  sorteios: SorteioCartela[] = [],
 ) {
+  const selos = selosEmAberto(selosCliente, sorteios);
   const pontos = Math.max(0, Number(cliente.pontos) || 0);
   return {
     nome: cliente.nome,

@@ -7,7 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import cantoAsset from "@/assets/canto.png.asset.json";
+import cantoAsset from "@/assets/canto-2.png.asset.json";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },

@@ -7,6 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import cantoAsset from "@/assets/canto.png.asset.json";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -24,23 +25,8 @@ const NAV = [
 
 function Marca() {
   return (
-    <Link to="/" className="flex min-w-0 items-center gap-3">
-      <span className="grid shrink-0 grid-cols-4 gap-0.5">
-        {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-          <span
-            key={n}
-            className={cn("h-2 w-2 rounded-[2px]", `bg-selo-${n}`)}
-          />
-        ))}
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate font-display text-sm font-bold leading-tight text-sidebar-foreground">
-          PROJETO 7 CORES
-        </span>
-        <span className="block truncate text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/60">
-          CGS · Compre e Ganhe Sempre
-        </span>
-      </span>
+    <Link to="/" className="block min-w-0">
+      <img src={cantoAsset.url} alt="CGS · Compre e ganhe sempre" className="h-auto w-full max-w-[220px] rounded-md" />
     </Link>
   );
 }
